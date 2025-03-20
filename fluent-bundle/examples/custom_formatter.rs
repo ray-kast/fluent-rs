@@ -6,9 +6,14 @@ use unic_langid::LanguageIdentifier;
 
 use fluent_bundle::memoizer::MemoizerKind;
 use fluent_bundle::types::{FluentNumber, FluentNumberOptions};
+use fluent_bundle::bundle::FormatterPass;
 use fluent_bundle::{FluentArgs, FluentBundle, FluentResource, FluentValue};
 
-fn custom_formatter<M: MemoizerKind>(num: &FluentValue, _intls: &M) -> Option<String> {
+fn custom_formatter<M: MemoizerKind>(
+    num: &FluentValue,
+    _intls: &M,
+    _pass: FormatterPass,
+) -> Option<String> {
     match num {
         FluentValue::Number(n) => Some(format!("CUSTOM({})", n.value)),
         _ => None,
