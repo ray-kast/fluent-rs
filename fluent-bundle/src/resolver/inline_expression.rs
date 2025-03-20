@@ -7,6 +7,7 @@ use std::fmt;
 use fluent_syntax::ast;
 use fluent_syntax::unicode::{unescape_unicode, unescape_unicode_to_string};
 
+use crate::bundle::FormatterPass;
 use crate::entry::GetEntry;
 use crate::memoizer::MemoizerKind;
 use crate::resource::FluentResource;
@@ -52,8 +53,10 @@ impl<'bundle> WriteValue<'bundle> for ast::InlineExpression<&'bundle str> {
                 } else {
                     scope.write_ref_error(w, self)
                 }
-            }
-            Self::NumberLiteral { value } => FluentValue::try_number(value).write(w, scope),
+            },
+            Self::NumberLiteral { value } => {
+                FluentValue::try_number(value).write(w, scope, FormatterPass::Inner)
+            },
             Self::TermReference {
                 id,
                 attribute,
@@ -93,7 +96,7 @@ impl<'bundle> WriteValue<'bundle> for ast::InlineExpression<&'bundle str> {
                     if let FluentValue::Error = result {
                         self.write_error(w)
                     } else {
-                        w.write_str(&result.into_string(scope))
+                        w.write_str(&result.into_string(scope, FormatterPass::Inner))
                     }
                 } else {
                     scope.write_ref_error(w, self)
@@ -103,7 +106,7 @@ impl<'bundle> WriteValue<'bundle> for ast::InlineExpression<&'bundle str> {
                 let args = scope.local_args.as_ref().or(scope.args);
 
                 if let Some(arg) = args.and_then(|args| args.get(id.name)) {
-                    arg.write(w, scope)
+                    arg.write(w, scope, FormatterPass::Inner)
                 } else {
                     if scope.local_args.is_none() {
                         scope.add_error(self.into());

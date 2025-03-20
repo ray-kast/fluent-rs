@@ -1,3 +1,4 @@
+use fluent_bundle::bundle::FormatterPass;
 use fluent_bundle::memoizer::MemoizerKind;
 use fluent_bundle::types::FluentType;
 use fluent_bundle::FluentArgs;
@@ -177,7 +178,11 @@ key-ref = Hello { DATETIME($date, dateStyle: "full") } World
 
 #[test]
 fn fluent_custom_number_format() {
-    fn custom_formatter<M: MemoizerKind>(num: &FluentValue, _intls: &M) -> Option<String> {
+    fn custom_formatter<M: MemoizerKind>(
+        num: &FluentValue,
+        _intls: &M,
+        _pass: FormatterPass,
+    ) -> Option<String> {
         match num {
             FluentValue::Number(_) => Some("CUSTOM".into()),
             _ => None,

@@ -24,6 +24,7 @@ use std::str::FromStr;
 
 use intl_pluralrules::{PluralCategory, PluralRuleType};
 
+use crate::bundle::FormatterPass;
 use crate::memoizer::MemoizerKind;
 use crate::resolver::Scope;
 use crate::resource::FluentResource;
@@ -214,14 +215,14 @@ impl<'source> FluentValue<'source> {
     }
 
     /// Write out a string version of the [`FluentValue`] to `W`.
-    pub fn write<W, R, M>(&self, w: &mut W, scope: &Scope<R, M>) -> fmt::Result
+    pub fn write<W, R, M>(&self, w: &mut W, scope: &Scope<R, M>, pass: FormatterPass) -> fmt::Result
     where
         W: fmt::Write,
         R: Borrow<FluentResource>,
         M: MemoizerKind,
     {
         if let Some(formatter) = &scope.bundle.formatter {
-            if let Some(val) = formatter(self, &scope.bundle.intls) {
+            if let Some(val) = formatter(self, &scope.bundle.intls, pass) {
                 return w.write_str(&val);
             }
         }
@@ -238,12 +239,16 @@ impl<'source> FluentValue<'source> {
     ///
     /// Clones inner values when owned, borrowed data is not cloned.
     /// Prefer using [`FluentValue::into_string()`] when possible.
-    pub fn as_string<R: Borrow<FluentResource>, M>(&self, scope: &Scope<R, M>) -> Cow<'source, str>
+    pub fn as_string<R: Borrow<FluentResource>, M>(
+        &self,
+        scope: &Scope<R, M>,
+        pass: FormatterPass,
+    ) -> Cow<'source, str>
     where
         M: MemoizerKind,
     {
         if let Some(formatter) = &scope.bundle.formatter {
-            if let Some(val) = formatter(self, &scope.bundle.intls) {
+            if let Some(val) = formatter(self, &scope.bundle.intls, pass) {
                 return val.into();
             }
         }
@@ -260,12 +265,16 @@ impl<'source> FluentValue<'source> {
     ///
     /// Takes self by-value to be able to skip expensive clones.
     /// Prefer this method over [`FluentValue::as_string()`] when possible.
-    pub fn into_string<R: Borrow<FluentResource>, M>(self, scope: &Scope<R, M>) -> Cow<'source, str>
+    pub fn into_string<R: Borrow<FluentResource>, M>(
+        self,
+        scope: &Scope<R, M>,
+        pass: FormatterPass,
+    ) -> Cow<'source, str>
     where
         M: MemoizerKind,
     {
         if let Some(formatter) = &scope.bundle.formatter {
-            if let Some(val) = formatter(&self, &scope.bundle.intls) {
+            if let Some(val) = formatter(&self, &scope.bundle.intls, pass) {
                 return val.into();
             }
         }

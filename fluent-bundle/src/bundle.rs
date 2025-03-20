@@ -140,7 +140,13 @@ pub struct FluentBundle<R, M> {
     pub(crate) intls: M,
     pub(crate) use_isolating: bool,
     pub(crate) transform: Option<fn(&str) -> Cow<str>>,
-    pub(crate) formatter: Option<fn(&FluentValue, &M) -> Option<String>>,
+    pub(crate) formatter: Option<fn(&FluentValue, &M, FormatterPass) -> Option<String>>,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum FormatterPass {
+    Final,
+    Inner,
 }
 
 impl<R, M> FluentBundle<R, M> {
@@ -349,7 +355,10 @@ impl<R, M> FluentBundle<R, M> {
     ///
     /// It's particularly useful for plugging in an external
     /// formatter for `FluentValue::Number`.
-    pub fn set_formatter(&mut self, func: Option<fn(&FluentValue, &M) -> Option<String>>) {
+    pub fn set_formatter(
+        &mut self,
+        func: Option<fn(&FluentValue, &M, FormatterPass) -> Option<String>>,
+    ) {
         self.formatter = func;
     }
 
@@ -494,7 +503,7 @@ impl<R, M> FluentBundle<R, M> {
     {
         let mut scope = Scope::new(self, args, Some(errors));
         let value = pattern.resolve(&mut scope);
-        value.into_string(&scope)
+        value.into_string(&scope, FormatterPass::Final)
     }
 
     /// Makes the provided rust function available to messages with the name `id`. See
